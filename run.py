@@ -11,8 +11,8 @@ options.register("config", "step2_PAT", VarParsing.multiplicity.singleton, VarPa
 options.register("maxEvents", -1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "Number of events to process (-1 for all)")
 options.register("sonic", True, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "enable SONIC in workflow")
 options.register("serverName", "default", VarParsing.multiplicity.singleton, VarParsing.varType.string, "name for server (used internally)")
-options.register("address", "", VarParsing.multiplicity.singleton, VarParsing.varType.string, "server address")
-options.register("port", 8001, VarParsing.multiplicity.singleton, VarParsing.varType.int, "server port")
+options.register("address", "hammer-f014.rcac.purdue.edu", VarParsing.multiplicity.singleton, VarParsing.varType.string, "server address")
+options.register("port", 8021, VarParsing.multiplicity.singleton, VarParsing.varType.int, "server port")
 options.register("params", "", VarParsing.multiplicity.singleton, VarParsing.varType.string, "json file containing server address/port")
 options.register("threads", 1, VarParsing.multiplicity.singleton, VarParsing.varType.int, "number of threads")
 options.register("streams", 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, "number of streams")
@@ -24,6 +24,8 @@ options.register("device","auto", VarParsing.multiplicity.singleton, VarParsing.
 options.register("docker", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "use Docker for fallback server")
 options.register("tmi", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "include time/memory summary")
 options.register("dump", False, VarParsing.multiplicity.singleton, VarParsing.varType.bool, "dump process python config")
+options.register("outputName", "step4.root", VarParsing.multiplicity.singleton, VarParsing.varType.string, "name for the output MiniAOD file")
+options.register("jsonName", "result_sonic.json", VarParsing.multiplicity.singleton, VarParsing.varType.string, "output json name for timing")
 options.parseArguments()
 
 if len(options.params)>0:
@@ -56,6 +58,8 @@ if options.threads>0:
     process.options.numberOfStreams = options.streams
 
 process.maxEvents.input = cms.untracked.int32(options.maxEvents)
+
+process.MINIAODSIMoutput.fileName = cms.untracked.string(options.outputName)
 
 if options.sonic:
     process.TritonService.verbose = options.verbose
@@ -105,3 +109,52 @@ if options.tmi:
 if options.dump:
     print(process.dumpPython())
     sys.exit(0)
+
+process.FastTimerService = cms.Service( "FastTimerService",
+    dqmPath = cms.untracked.string( "DQM/TimerService" ),
+    dqmModuleTimeRange = cms.untracked.double( 40.0 ),
+    enableDQMbyPath = cms.untracked.bool( True ),
+    writeJSONSummary = cms.untracked.bool( True ),
+    dqmPathMemoryResolution = cms.untracked.double( 5000.0 ),
+    enableDQM = cms.untracked.bool( True ),
+    enableDQMbyModule = cms.untracked.bool( True ),
+    dqmModuleMemoryRange = cms.untracked.double( 100000.0 ),
+    dqmModuleMemoryResolution = cms.untracked.double( 500.0 ),
+    dqmMemoryResolution = cms.untracked.double( 5000.0 ),
+    enableDQMbyLumiSection = cms.untracked.bool( True ),
+    dqmPathTimeResolution = cms.untracked.double( 0.5 ),
+    printEventSummary = cms.untracked.bool( False ),
+    dqmPathTimeRange = cms.untracked.double( 100.0 ),
+    dqmTimeRange = cms.untracked.double( 2000.0 ),
+    enableDQMTransitions = cms.untracked.bool( False ),
+    dqmPathMemoryRange = cms.untracked.double( 1000000.0 ),
+    dqmLumiSectionsRange = cms.untracked.uint32( 2500 ),
+    enableDQMbyProcesses = cms.untracked.bool( True ),
+    dqmMemoryRange = cms.untracked.double( 1000000.0 ),
+    dqmTimeResolution = cms.untracked.double( 5.0 ),
+    printRunSummary = cms.untracked.bool( False ),
+    dqmModuleTimeResolution = cms.untracked.double( 0.2 ),
+    printJobSummary = cms.untracked.bool( True ),
+    jsonFileName = cms.untracked.string(  options.jsonName )
+)
+
+process.ThroughputService = cms.Service( "ThroughputService",
+    dqmPath = cms.untracked.string( "HLT/Throughput" ),
+    eventRange = cms.untracked.uint32( 10000 ),
+    timeRange = cms.untracked.double( 60000.0 ),
+    printEventSummary = cms.untracked.bool( True ),
+    eventResolution = cms.untracked.uint32( 100 ),
+    enableDQM = cms.untracked.bool( True ),
+    dqmPathByProcesses = cms.untracked.bool( True ),
+    timeResolution = cms.untracked.double( 5.828 )
+)
+
+process.load('FWCore.MessageLogger.MessageLogger_cfi')
+if process.maxEvents.input.value()>10:
+     process.MessageLogger.cerr.FwkReport.reportEvery = process.maxEvents.input.value()//10
+if process.maxEvents.input.value()>2000 or process.maxEvents.input.value()<0:
+     process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.ThroughputService = cms.untracked.PSet(
+    limit = cms.untracked.int32(10000000),
+    reportEvery = cms.untracked.int32(1)
+)
