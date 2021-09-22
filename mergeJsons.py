@@ -1,6 +1,8 @@
 import json
 import numbers
 import itertools
+import sys
+import glob
 
 def merge(a, b):
     "merges b into a"
@@ -26,20 +28,42 @@ def merge(a, b):
         a = b
 
 filelist = [
-    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results_8jobs/json/nosonic_4threads_1.json',
-    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results_8jobs/json/nosonic_4threads_2.json',
-    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results_8jobs/json/nosonic_4threads_4.json',
-    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results_8jobs/json/nosonic_4threads_5.json',
-    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results_8jobs/json/nosonic_4threads_7.json',
-    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results_8jobs/json/nosonic_4threads_8.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_1.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_2.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_3.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_4.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_5.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_6.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_7.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_8.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_9.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_10.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_11.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_12.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_13.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_14.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_15.json',
+    '/home/feng356/CMSSW_12_0_0_pre5/src/sonic-workflows/results/json/sonic_4threads_16.json',
 ]
 
 import argparse
 parser = argparse.ArgumentParser(description="Options to merge json files from FastTimeService")
+parser.add_argument('-i', "--input",  dest="input",  help="Input files to process", required=False, default=None)
 parser.add_argument("-o", "--output", dest="output", help="Which processor to run", required=True)
 args = parser.parse_args()
 
+if args.input:
+    print("use the input provided")
+    print(args.input)
+    filelist = glob.glob(args.input)
+    print(filelist)
+
+if len(filelist)==0:
+    print("find zero matched file, return")
+    sys.exit()
+
 f1 = open(filelist[0], 'r')
+print("fname ", f1)
 data1 = json.load(f1)
 
 for f in filelist[1:]:
